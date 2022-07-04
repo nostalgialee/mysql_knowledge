@@ -469,8 +469,6 @@ create table anthor2book(
 
 
 
-
-
 # 了解：
 	# 将来你们接触某一些大型项目的时候，尽量不要给表建立外键关系，因为外键直接在数据库级别就变成耦合的了，那么我们要拓展或者删除或者更改某些数据库或者数据表的时候，拓展起来就比较难，我们可以自己从自己的程序代码的逻辑层面上将这些关联关系建立好，有很多公司就是这么做的，利于拓展，如果我们加了很多的foreign key ，那么当你想删除一个表的时候，可能会牵一发而动全身，了解一下就可以了
 	
@@ -485,11 +483,55 @@ create table anthor2book(
 
 ### 7.修改表 alter table
 
+```mysql
+# 修改表名
+alter table table_name rename new_name
+
+
+# 增加字段
+	alter table table_name add 数据类型 [完整性约束条件…]
+
+	#添加这个字段的时候，把它放到第一个字段位置去。
+	alter table table_name add 字段名  数据类型 [完整性约束条件…]  FIRST;
+	
+	#after是放到后的这个字段的后面去了，我们通过一个first和一个after就可以将	新添加的字段放到表的任意字段位置了。
+	alter table table_name add 字段名  数据类型 [完整性约束条件…]  AFTER 字段名
+
+
+
+# 删除字段
+alter table table_name drop 字段名;
+
+
+# 修改字段
+	alter table table_name modify 字段名 数据类型 [完整性约束条件…];
+	
+	# ange比modify还多了个改名字的功能，这一句是只改了一个字段名
+	alter table table_name change 旧字段名 新字段名 旧数据类型 [完整性约束条件…]; 
+	
+	# 这一句除了改了字段名，还改了数据类型、完整性约束等等的内容
+	alter table table_name change 旧字段名;
+
+
+```
 
 
 
 
-### 8.复制表
+
+
+
+
+
+### 8.复制表 --- 很少用到
+
+```mysql
+# 复制 table1 表 （key不会复制: 主键、外键和索引）
+create table new_table select * from table1;
+
+```
+
+
 
 
 
