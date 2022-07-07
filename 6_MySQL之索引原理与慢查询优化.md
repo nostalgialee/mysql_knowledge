@@ -306,7 +306,123 @@ select * from s1 where id > 1 and id < 1000000;
 
 ## 五 MySQL索引管理
 
+```mysql
+# 1.索引的功能：
+        # 1.加速查询
+        # 2.约束作用 --- primary key，unique，联合唯一也都是索引
 
+
+	
+# 2.mysql 常用索引
+
+        # 1.普通索引INDEX：加速查找
+
+        # 2.唯一索引：
+            -主键索引 PRIMARY KEY：加速查找+约束（不为空、不能重复）
+            -唯一索引 UNIQUE:加速查找+约束（不能重复）
+
+        # 3.联合索引：
+            -PRIMARY KEY(id,name):联合主键索引
+            -UNIQUE(id,name):联合唯一索引
+            -INDEX(id,name):联合普通索引
+
+
+       # 除此之外还有全文索引，即FULLTEXT
+            会员备注信息 ， 如果需要建索引的话，可以选择全文搜索。
+            用于搜索很长一篇文章的时候，效果最好。
+            用在比较短的文本，如果就一两行字的，普通的 INDEX 也可以。
+            但其实对于全文搜索，我们并不会使用MySQL自带的该索引，而是会选择第三方软件如Sphinx，专门来做全文搜索。
+
+	   # 其他的如空间索引SPATIAL，了解即可，几乎不用
+
+
+
+# 3.索引操作：
+		1.添加主键索引:
+            way1: # 创建表的时候添加
+                create table tb1 (
+                    id int primary key,
+                )
+                # 或者
+               create table tb1 (
+                    id int,
+                    primary key(id)
+                )
+            way2: # 表创建完了之后添加
+                alter table tb1 add primary key(id);
+                # 删除主键索引:
+                alter table tb1 drop primary key(id);
+
+          
+         2.唯一索引:
+			 # way1: # 创建表的时候添加
+                  create table t1(
+                    Id int unique,
+                    )
+                   # 或者 --- 记得要给索引起名字
+                  create table t1(
+                    Id int,
+                    unique key uni_name (id)
+                  )
+              # way2: # 表创建完了之后添加 
+                  alter table s1 add unique key  u_name(id);
+                  删除:
+                  alter table s1 drop index u_name;
+
+
+         3.普通索引:
+			 # way1: # 创建表的时候添加
+                    Create table t1(
+                    Id int,
+                    Index index_name(id) # 这个要记住，之前没记住
+                    )
+              
+			# way2: # 表创建完了之后添加
+              	    Alter table s1 add index index_name(id);
+              	    Create index index_name on s1(id);
+                    # 删除:
+                    Alter table s1 drop index u_name;
+                    DROP INDEX 索引名 ON 表名字;
+
+
+
+# 4.索引的两大类型hash与btree
+	#我们可以在创建上述索引的时候，为其指定索引类型，分两类
+    hash类型的索引：查询单条快，范围查询慢
+    btree类型的索引：b+树，层数越多，数据量指数级增长（我们就用它，因为innodb默认支持它）
+
+	#不同的存储引擎支持的索引类型也不一样
+    InnoDB 支持事务，支持行级别锁定，支持 B-tree、Full-text 等索引，不支持 Hash 索引；
+    MyISAM 不支持事务，支持表级别锁定，支持 B-tree、Full-text 等索引，不支持 Hash 索引；
+    Memory 不支持事务，支持表级别锁定，支持 B-tree、Hash 等索引，不支持 Full-text 索引；
+    NDB 支持事务，支持行级别锁定，支持 Hash 索引，不支持 B-tree、Full-text 等索引；
+    Archive 不支持事务，支持表级别锁定，不支持 B-tree、Hash、Full-text 等索引；
+
+
+
+# 5.创建/删除索引的标准语法
+
+    #方法一：创建表时
+          CREATE TABLE 表名 (
+                    字段名1  数据类型 [完整性约束条件…],
+                    字段名2  数据类型 [完整性约束条件…],
+                    [UNIQUE | FULLTEXT | SPATIAL ]   INDEX | KEY
+                    [索引名]  (字段名[(长度)]  [ASC |DESC]) 
+                    );
+
+
+    #方法二：CREATE在已存在的表上创建索引
+            CREATE  [UNIQUE | FULLTEXT | SPATIAL ]  INDEX  索引名 
+                         ON 表名 (字段名[(长度)]  [ASC |DESC]) ;
+
+
+    #方法三：ALTER TABLE在已存在的表上创建索引
+            ALTER TABLE 表名 ADD  [UNIQUE | FULLTEXT | SPATIAL ] INDEX
+                                 索引名 (字段名[(长度)]  [ASC |DESC]) ;
+
+    #删除索引：DROP INDEX 索引名 ON 表名字;
+
+```
 
 
 
@@ -320,9 +436,18 @@ select * from s1 where id > 1 and id < 1000000;
 
 ## 六 测试索引
 
+```mysql
+#1. 一定是为搜索条件的字段创建索引，比如select * from s1 where id = 333;就需要为id加上索引
 
+#2. 在表中已经有大量数据的情况下，建索引会很慢，且占用硬盘空间，建完后查询速度加快
+    比如create index idx on s1(id);会扫描表中所有的数据，然后以id为数据项，创建索引结构，存放于硬盘的表中。
+    建完以后，再查询就会很快了。
 
+#3. 需要注意的是：innodb表的索引会存放于s1.ibd文件中，而myisam表的索引则会有单独的索引文件table1.MYI
 
+    MyiSAM索引文件和数据文件是分离的，索引文件仅保存数据记录的地址。而在innodb中，表数据文件本身就是按照B+Tree（BTree即Balance True）组织的一个索引结构，这棵树的叶节点data域保存了完整的数据记录。这个索引的key是数据表的主键，因此innodb表数据文件本身就是主索引。
+    因为inndob的数据文件要按照主键聚集，所以innodb要求表必须要有主键（Myisam可以没有），如果没有显式定义，则mysql系统会自动选择一个可以唯一标识数据记录的列作为主键，如果不存在这种列，则mysql会自动为innodb表生成一个隐含字段作为主键，这字段的长度为6个字节，类型为长整型.
+```
 
 
 
@@ -333,6 +458,138 @@ select * from s1 where id > 1 and id < 1000000;
 
 
 ## 七 正确使用索引
+
+```mysql
+# 一 索引未命中
+	# 不是说我们创建了索引就一定会加快查询速度，
+	# 我们在添加索引时，必须遵循以下问题 --- 索引未能命中的情况:
+	
+	1 范围问题，或者说条件不明确，条件中出现这些符号或关键字：>、>=、<、<=、!= 、between...and...、like、注意查询的时候以下情况：
+        select count(*) from tb1 where id = 10000; # 明确条件，索引树可以快速找到
+
+        select count(*) from tb1 where id > 10000;
+        # 指定了一个范围，mysql会向着 100001， 100002 在搜索树中查找，假如范围很大，相当于全表扫描，效率很低
+
+
+        # 范围很小，查询依旧很快，但是随着范围变大，查询速度成倍变慢
+        select count(*) from tb1 where id > 1000 and id < 2000;
+        select count(*) from tb1 where id between 1 and 3;
+
+
+        # 很大的范围
+        select count(*) from tb1 where id != 10000;
+        select count(*) from tb1 where id between 1 and 110000;
+	
+	   # like, like匹配精准的值，查询速度快
+	   select count(*) from tb1 where email like 'xxx';
+	   select count(*) from tb1 where email like 'xxx%'; # % 处于末尾，速度依旧很快 --- 最左匹配的规则
+	   select count(*) from tb1 where email like '%xxx';# % 处于开头，查询速度慢
+	
+    
+    
+	2 尽量选择区分度高的列作为索引。
+		区分度的公式是count(distinct col)/count(*)，表示字段不重复的比例，比例越大我们扫描的记录数越少。唯一键的区分度是1，而一些状态、性别字段可能在大数据面前区分度就是0，那可能有人会问，这个比例有什么经验值吗？使用场景不同，这个值也很难确定，一般需要join的字段我们都要求是0.1以上，即平均1条扫描10条记录
+	   
+	   # 对于区分度低的字段，无法找到大小关系，因为值都是相等的，毫无疑问，还想要用b+树存放这些等值的数据，只能增加树的高度，字段的区分度越低，则树的高度越高。极端的情况，索引字段的值都一样，那么b+树几乎成了一根棍
+
+        # 结论：为区分度低的字段建立索引，索引树的高度会很高，带来的影响呢：
+        --- name 数据均为 egon 的话
+        # 1：如果条件是name='xxxx',那么肯定是可以第一时间判断出'xxxx'是不在索引树中的（因为树中所有的值均为'egon’,看第一条的时候就知道你不在索引树里面了），所以查询速度很快
+        # 2：如果条件正好是name='egon',查询时，我们永远无法从树的某个位置得到一个明确的范围，只能往下找，往下找，往下找。。。这与全表扫描的IO次数没有多大区别，所以速度很慢
+
+
+
+	3 = 和 in 可以乱序
+        # 比如a = 1 and b = 2 and c = 3 建立(a,b,c)索引可以任意顺序，mysql的查询优化器会帮你优化成索引可以识别的形式
+	
+	
+	4 索引列不能参与计算 保持列“干净”
+		# 比如from_unixtime(create_time) = ’2014-05-29’就不能使用到索引，原因很简单，b+树中存的都是数据表中的字段值，但进行检索时，需要把所有元素都应用函数才能比较，显然成本太大。所以语句应该写成create_time = unix_timestamp(’2014-05-29’)
+	
+	
+	5 and/or --- 联合索引只支持 and, 不支持 or, 因为 and 相当于可以变换顺序
+		    # and的工作原理
+		    条件：
+        		a = 10 and b = 'xxx' and c > 3 and d =4
+    		索引：
+        		制作联合索引(d,a,b,c)
+        		
+    		工作原理:  
+    			#如果是你找的话，你会怎么找，是不是从左到右一个一个的比较啊，首先你不能确定a这个字段是不是有索引，即便是有索引，也不一定能确保命中索引了（所谓命中索引，就是应用上了索引），mysql不会这么笨的，看下面mysql是怎么找的：
+    			
+        	索引的本质原理就是先不断的把查找范围缩小下来，然后再进行处理，对于连续多个and：mysql会按照联合索引，从左到右的顺序找一个区分度高的索引字段(这样便可以快速锁定很小的范围)，加速查询，查询优化器可以将上述sql优化成， 
+        	d =4 and a = 10 and b = 'xxx' and c > 3
+        	即按照d—>a->b->c的顺序
+
+			# or的工作原理 -- 使用or连接各个查询条件无法命中索引
+			条件：
+        		a = 10 or b = 'xxx' or c > 3 or d =4
+    		索引：
+        		制作联合索引(d,a,b,c) 
+        
+    		工作原理:
+        		只要一个匹配成功就行，所以对于连续多个or：mysql会按照条件的顺序，从左到右依次判断，即a->b->c->d
+	
+	
+	
+	
+	6 最左前缀匹配原则（详见第八小节）
+		# 对于组合索引mysql会一直向右匹配直到遇到范围查询(>、<、between、like)就停止匹配(指的是范围大了，有索引速度也慢)
+		比如a = 1 and b = 2 and c > 3 and d = 4
+		联合索引(a, b, c, d)， 是用不到 索引 d 的，
+		联合索引(a,b,d,c), 则都可以用到
+	
+	
+	
+	7 其他情况 --- 不能命中索引的
+            - 使用函数 
+            	select * from tb1 where reverse(email) = 'egon';
+
+        	- 类型不一致
+                如果列是字符串类型，传入条件是必须用引号引起来，不然...
+                select * from tb1 where email = 999;
+
+        	#排序条件为索引，则select字段必须也是索引字段，否则无法命中
+        	- order by
+                select name from s1 order by email desc;
+                当根据索引排序时候，select查询的字段如果不是索引，则速度仍然很慢
+                select email from s1 order by email desc;
+                特别的：如果对主键排序，则还是速度很快：
+                    select * from tb1 order by nid desc;
+
+        	- 组合索引最左前缀
+            	如果组合索引为：(name,email)
+            	name and email       -- 命中索引
+            	name                 -- 命中索引
+            	email                -- 未命中索引
+
+
+        	- count(1)或count(列)代替count(*)在mysql中没有差别了
+
+        	- create index xxxx  on tb(title(19)) #text类型，必须制定长度
+
+
+
+
+
+
+
+# 二 其他注意事项
+
+    - 避免使用select *
+    - count(1)或count(列) 代替 count(*)
+    - 创建表时尽量时 char 代替 varchar
+    - 表的字段顺序固定长度的字段优先
+    - 组合索引代替多个单列索引（经常使用多个条件查询时）
+    - 尽量使用短索引
+    - 使用连接（JOIN）来代替子查询(Sub-Queries)
+    - 连表时注意条件类型需一致
+    - 索引散列值（重复少）不适合建索引，例：性别不适合
+    
+    
+```
+
+
 
 
 
@@ -346,6 +603,77 @@ select * from s1 where id > 1 and id < 1000000;
 
 ## 八 联合索引与覆盖索引
 
+### 1.联合索引
+
+![](E:\learning_document\database_mysql\pictures\联合索引.png)
+
+```mysql
+# 定义：
+	联合索引时指对表上的多个列合起来做一个索引，避免查询的时候，where后面的条件字段一直变化，你就想给每个字段加索引的尴尬问题。
+
+# 本质：是一颗 b+ 树
+
+create table t(
+    a int,
+    b int,
+    primary key(a),
+    key idx_a_b(a,b)
+    );
+    
+
+# 原理：
+联合索引的B+树 与 单个键的B+树并没有什么不同，键值都是排序的，通过叶子结点可以逻辑上顺序地读出所有数据，就上面的例子来说，即（1,1），（1,2），（2,1），（2,4），（3,1），（3,2），数据按（a,b）的顺序进行了存放。
+
+	所以 以下两个查询语句均可使用 联合索引 (a, b) -- 组合索引最左前缀
+	select * from table where a=xxx and b=xxx
+	select * from table where a=xxx 
+	
+	select * from table where b=xxx # 不可以使用联合索引 (a, b)
+	
+```
+
+
+
+**注意建立联合索引的一个原则** --- **索引的最左匹配原则**
+			==1.将区分度高的放在最左边，依次排下来，==
+			==2.范围查询的条件尽可能的往后边放。==
+
+**联合索引的第二个好处是在第一个键相同的情况下，已经对第二个键进行了排序处理**
+
+
+
+
+
+### 2.覆盖索引
+
+```mysql
+# 定义：
+	InnoDB存储引擎支持覆盖索引（covering index，或称索引覆盖），即从辅助索引中就可以得到查询记录，而不需要查询聚集索引中的记录。--- 辅助索引中叶子节点中直接获取到数据
+	
+	
+# 优点：
+	辅助索引不包含整行记录的所有信息，故其大小要远小于聚集索引，因此可以减少大量的IO操作
+
+
+# 注意：
+	覆盖索引技术最早是在InnoDB Plugin中完成并实现，这意味着对于InnoDB版本小于1.0的，或者MySQL数据库版本为5.0以下的，InnoDB存储引擎不支持覆盖索引特性
+
+
+explain select name from s1 where id=1000; #没有任何索引
+create index idx_id on s1(id); #创建索引
+explain select name from s1 where id=1000; #命中辅助索引，但是未覆盖索引，还需要从聚集索引中查找name
+explain select id from s1 where id=1000; #在辅助索引中就找到了全部信息，Using index 代表 覆盖索引
+
+
+# 特殊情况：
+	# 联合索引userid_2（userid,buy_date）,一般情况，我们按照buy_date是无法使用该索引的，但特殊情况下：查询语句是统计操作，且是覆盖索引，则按照buy_date当做查询条件时，也可以使用该联合索引， 这种情况是会命中索引的
+explain select count(*) from buy_log where buy_date >= '2011-01-01' and buy_date < '2011-02-01';
+	
+
+```
+
+
+
 
 
 
@@ -354,14 +682,142 @@ select * from s1 where id > 1 and id < 1000000;
 
 ## 九 查询优化神器-explain
 
+**关于explain，如果大家有兴趣，可以看看这篇博客，他总结的挺好的：http://www.cnblogs.com/yycc/p/7338894.html**
+
+```mysql
+# 执行计划：让mysql预估执行操作(一般正确)
+    all < index < range < index_merge < ref_or_null < ref < eq_ref < system/const
+    id,email
+    
+    慢：
+        select * from userinfo3 where name='alex'
+        
+        explain select * from userinfo3 where name='alex'
+        type: ALL(全表扫描)
+            select * from userinfo3 limit 1;
+    快：
+        select * from userinfo3 where email='alex'
+        type: const(走索引)
+        
+
+```
+
 
 
 
 
 ## 十 慢查询优化的基本步骤
 
+```mysql
+# 0.先运行看看是否真的很慢，注意设置SQL_NO_CACHE
+
+# 1.where条件单表查，锁定最小返回记录表。
+	这句话的意思是把查询语句的where都应用到表中返回的记录数最小的表开始查起，单表每个字段分别查询，看哪个字段的区分度最高
+
+# 2.explain查看执行计划，是否与1预期一致（从锁定记录较少的表开始查询）
+
+# 3.order by limit 形式的sql语句让排序的表优先查
+
+# 4.了解业务方使用场景
+
+# 5.加索引时参照建索引的几大原则
+
+# 6.观察结果，不符合预期继续从0分析
+
+
+```
+
+
+
+```mysql
+MySQL日志管理
+========================================================
+错误日志: 记录 MySQL 服务器启动、关闭及运行错误等信息
+二进制日志: 又称binlog日志，以二进制文件的方式记录数据库中除 SELECT 以外的操作
+查询日志: 记录查询的信息
+慢查询日志: 记录执行时间超过指定时间的操作
+中继日志： 备库将主库的二进制日志复制到自己的中继日志中，从而在本地进行重放
+通用日志： 审计哪个账号、在哪个时段、做了哪些事件
+事务日志或称redo日志： 记录Innodb事务相关的如事务执行时间、检查点等
+========================================================
+一、bin-log
+1. 启用
+# vim /etc/my.cnf
+[mysqld]
+log-bin[=dir\[filename]]
+# service mysqld restart
+2. 暂停
+//仅当前会话
+SET SQL_LOG_BIN=0;
+SET SQL_LOG_BIN=1;
+3. 查看
+查看全部：
+# mysqlbinlog mysql.000002
+按时间：
+# mysqlbinlog mysql.000002 --start-datetime="2012-12-05 10:02:56"
+# mysqlbinlog mysql.000002 --stop-datetime="2012-12-05 11:02:54"
+# mysqlbinlog mysql.000002 --start-datetime="2012-12-05 10:02:56" --stop-datetime="2012-12-05 11:02:54" 
+
+按字节数：
+# mysqlbinlog mysql.000002 --start-position=260
+# mysqlbinlog mysql.000002 --stop-position=260
+# mysqlbinlog mysql.000002 --start-position=260 --stop-position=930
+4. 截断bin-log（产生新的bin-log文件）
+a. 重启mysql服务器
+b. # mysql -uroot -p123 -e 'flush logs'
+5. 删除bin-log文件
+# mysql -uroot -p123 -e 'reset master' 
+
+
+二、查询日志
+启用通用查询日志
+# vim /etc/my.cnf
+[mysqld]
+log[=dir\[filename]]
+# service mysqld restart
+
+三、慢查询日志
+启用慢查询日志
+# vim /etc/my.cnf
+[mysqld]
+log-slow-queries[=dir\[filename]]
+long_query_time=n
+# service mysqld restart
+MySQL 5.6:
+slow-query-log=1
+slow-query-log-file=slow.log
+long_query_time=3
+查看慢查询日志
+测试:BENCHMARK(count,expr)
+SELECT BENCHMARK(50000000,2*3);
+```
+
 
 
 
 
 ## 十一 慢日志管理
+
+```mysql
+慢日志
+            - 执行时间 > 10
+            - 未命中索引
+            - 日志文件路径
+            
+        配置：
+            - 内存
+                show variables like '%query%';
+                show variables like '%queries%';
+                set global 变量名 = 值
+            - 配置文件
+                mysqld --defaults-file='E:\wupeiqi\mysql-5.7.16-winx64\mysql-5.7.16-winx64\my-default.ini'
+                
+                my.conf内容：
+                    slow_query_log = ON
+                    slow_query_log_file = D:/....
+                    
+                注意：修改配置文件之后，需要重启服务
+
+
+```
+
