@@ -709,6 +709,7 @@ explain select count(*) from buy_log where buy_date >= '2011-01-01' and buy_date
 ## 十 慢查询优化的基本步骤
 
 ```mysql
+
 # 0.先运行看看是否真的很慢，注意设置SQL_NO_CACHE
 
 # 1.where条件单表查，锁定最小返回记录表。
