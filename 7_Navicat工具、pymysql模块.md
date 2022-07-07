@@ -252,19 +252,12 @@ print(res3)
 print(res4)
 print(res5)
 print('%s rows in set (0.00 sec)' %rows)
-
+# >>> rows in set (0.00 sec)
 
 
 conn.commit() # 提交后才发现表中插入记录成功
 cursor.close()
 conn.close()
-
-'''
-
-((4, 'root', '123456'), (5, 'root', '123456'))
-((6, 'root', '123456'), (7, 'lhf', '12356'), (8, 'eee', '156'))
-rows in set (0.00 sec)
-'''
 
 ```
 
