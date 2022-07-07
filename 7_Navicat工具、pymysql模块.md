@@ -209,8 +209,62 @@ conn.close()
 **四 查：fetchone，fetchmany，fetchall**
 
 ```mysql
+import pymysql
+#链接
+conn=pymysql.connect(
+    host='localhost',
+    user='root',
+    password='123',
+    database='egon'
+)
+
+#游标
+cursor=conn.cursor()
+
+#执行sql语句
+sql='select * from userinfo;'
+# 执行sql语句，返回sql影响成功的行数rows,将结果放入一个集合，等待被查询
+rows=cursor.execute(sql) 
+
+# cursor.scroll(3,mode='absolute') # 相对绝对位置移动
+# cursor.scroll(3,mode='relative') # 相对当前位置移动
+
+# one data
+res1=cursor.fetchone() # (1, 'root', '123456')
+res2=cursor.fetchone() # (2, 'root', '123456')
+res3=cursor.fetchone() # (3, 'root', '123456')
 
 
+# many data
+res4=cursor.fetchmany(2) # 参数是取出几条数据
+# ((4, 'root', '123456'), (5, 'root', '123456'))
+
+
+# all data
+res5=cursor.fetchall() # 取出剩余的所有数据
+#  ((6, 'root', '123456'), (7, 'lhf', '12356'), (8, 'eee', '156'))
+
+
+
+print(res1)
+print(res2)
+print(res3)
+print(res4)
+print(res5)
+print('%s rows in set (0.00 sec)' %rows)
+
+
+
+conn.commit() # 提交后才发现表中插入记录成功
+cursor.close()
+conn.close()
+
+'''
+
+((4, 'root', '123456'), (5, 'root', '123456'))
+((6, 'root', '123456'), (7, 'lhf', '12356'), (8, 'eee', '156'))
+rows in set (0.00 sec)
+'''
 
 ```
 
