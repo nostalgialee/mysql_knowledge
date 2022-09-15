@@ -50,7 +50,7 @@ show variables like "storage_engine%"; # 查看当前正在使用的引擎
 
 ```mysql
 # InnoDB引擎
-        介绍：InnoDB引擎是MySQL数据库的另一个重要的存储引擎，正称为目前MySQL AB所发行新版的标准，被包含在所有二进制安装包里。和其他的存储引擎相比，InnoDB引擎的优点是支持兼容ACID的事务(类似于PostGreSQL)，以及参数完整性(即对外键的支持)。Oracle公司与2005年10月收购了Innobase。Innobase采用双认证授权。它使用GNU发行，也允许其他想将InnoDB结合到商业软件的团体获得授权。
+        介绍：InnoDB引擎是MySQL数据库的另一个重要的存储引擎，正称为目前MySQL AB所发行新版的标准，被包含在所有二进制安装包里。和其他的存储引擎相比，InnoDB引擎的优点是支持兼容ACID的事务(类似于PostGreSQL)，以及参数完整性(即对外键的支持)。Oracle公司与2005年10月收购了Innobase。Innobase采用双l认证授权。它使用GNU发行，也允许其他想将InnoDB结合到商业软件的团体获得授权。
 
 
 # InnoDB引擎特点：
